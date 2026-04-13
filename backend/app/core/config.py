@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     FERNET_KEY: str
 
-    ALLOWED_ORIGINS: list = ["http://localhost:5173"]
+    ALLOWED_ORIGINS: str = "*"
 
     class Config:
         env_file = ".env"
