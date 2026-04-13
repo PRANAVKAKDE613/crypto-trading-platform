@@ -9,6 +9,9 @@ from app.routers import auth, api_keys, trading, bot
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print(f"Starting {settings.APP_NAME}...")
+    # Run migrations on startup
+    import subprocess
+    subprocess.run(["alembic", "upgrade", "head"], check=True)
     yield
     print("Shutting down...")
 
