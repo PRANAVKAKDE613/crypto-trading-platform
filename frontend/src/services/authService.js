@@ -1,5 +1,4 @@
-
-import api from './auth'
+import api from './api'
 
 export const authService = {
   login: async (email, password) => {
