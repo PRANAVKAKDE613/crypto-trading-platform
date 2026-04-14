@@ -5,6 +5,9 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.routers import auth, api_keys, trading, bot
 
+from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware import Middleware
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -26,13 +29,11 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://athletic-alignment-production-c07e.up.railway.app",
-        "http://localhost:5173",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 

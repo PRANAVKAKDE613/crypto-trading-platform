@@ -1,27 +1,30 @@
-import api from './api'
+import axios from 'axios'
 
-export const authService = {
-  async register(email, password) {
-    const response = await api.post('/auth/register', { email, password })
-    return response.data
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  headers: {
+    'Content-Type': 'application/json',
   },
+  withCredentials: false,
+})
 
-  async login(email, password) {
-    const formData = new FormData()
-    formData.append('username', email)
-    formData.append('password', password)
-    const response = await api.post('/auth/login', formData, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    })
-    localStorage.setItem('access_token', response.data.access_token)
-    return response.data
-  },
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
 
-  logout() {
-    localStorage.removeItem('access_token')
-  },
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('access_token')
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
 
-  isAuthenticated() {
-    return !!localStorage.getItem('access_token')
-  },
-}
+export default api
