@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Navbar from '../components/Navbar'
 import { tradingService } from '../services/tradingService'
+import ApiKeyModal from '../components/ApiKeyModal'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 const SYMBOLS = ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', 'SOLUSDT', 'XRPUSDT']
@@ -12,6 +13,7 @@ const Dashboard = () => {
   const [selectedSymbol, setSelectedSymbol] = useState('BTCUSDT')
   const [balanceError, setBalanceError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
 
   const fetchPrices = async () => {
     const newPrices = {}
@@ -22,6 +24,7 @@ const Dashboard = () => {
       } catch (e) {}
     }
     setPrices(newPrices)
+
     const time = new Date().toLocaleTimeString()
     setChartData(prev => {
       const updated = { ...prev }
@@ -42,6 +45,7 @@ const Dashboard = () => {
     try {
       const data = await tradingService.getBalance()
       setBalances(data.balances || [])
+      setBalanceError('')
     } catch (e) {
       setBalanceError('Add your Binance API key to see balances.')
     } finally {
@@ -65,18 +69,50 @@ const Dashboard = () => {
       <div style={styles.container}>
         <h1 style={styles.title}>Dashboard</h1>
 
-        {/* Single Wallet Card */}
+        {/* Wallet */}
         <div style={styles.walletCard}>
           <div>
             <p style={styles.walletLabel}>Total Wallet Balance</p>
             <p style={styles.walletValue}>${totalWallet.toLocaleString()} USDT</p>
-            {balanceError && <p style={styles.error}>{balanceError}</p>}
+
+            {balanceError && (
+              <div>
+                <p style={styles.error}>{balanceError}</p>
+
+                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                  
+                  {/* Binance link */}
+                  <button
+                    onClick={() =>
+                      window.open(
+                        'https://www.binance.com/en/my/settings/api-management',
+                        '_blank'
+                      )
+                    }
+                    style={styles.binanceBtn}
+                  >
+                    Create Binance API
+                  </button>
+
+                  {/* Modal trigger */}
+                  <button
+                    onClick={() => setShowModal(true)}
+                    style={styles.addBtn}
+                  >
+                    Add API Key
+                  </button>
+
+                </div>
+              </div>
+            )}
+
             {loading && <p style={styles.muted}>Loading wallet...</p>}
           </div>
+
           <div style={styles.walletBadge}>Testnet</div>
         </div>
 
-        {/* 5 Currency Ticker */}
+        {/* Ticker */}
         <div style={styles.ticker}>
           {SYMBOLS.map(symbol => (
             <div
@@ -96,46 +132,35 @@ const Dashboard = () => {
           ))}
         </div>
 
-        {/* Live Chart */}
+        {/* Chart */}
         <div style={styles.chartCard}>
           <div style={styles.chartHeader}>
             <h2 style={styles.chartTitle}>{selectedSymbol} — Live Price</h2>
             <span style={styles.live}>● LIVE</span>
           </div>
+
           {chartData[selectedSymbol] && chartData[selectedSymbol].length > 1 ? (
             <ResponsiveContainer width="100%" height={320}>
               <LineChart data={chartData[selectedSymbol]}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3a" />
-                <XAxis dataKey="time" stroke="#a0a0b0" tick={{ fontSize: 11 }} />
-                <YAxis
-                  stroke="#a0a0b0"
-                  tick={{ fontSize: 11 }}
-                  domain={['auto', 'auto']}
-                  tickFormatter={(v) => `$${v.toLocaleString()}`}
-                  width={90}
-                />
-                <Tooltip
-                  contentStyle={{ background: '#1a1d27', border: '1px solid #2a2d3a', borderRadius: '8px' }}
-                  labelStyle={{ color: '#a0a0b0' }}
-                  formatter={(v) => [`$${v.toLocaleString()}`, 'Price']}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="price"
-                  stroke="#4f8ef7"
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                />
+                <XAxis dataKey="time" stroke="#a0a0b0" />
+                <YAxis stroke="#a0a0b0" />
+                <Tooltip />
+                <Line type="monotone" dataKey="price" stroke="#4f8ef7" dot={false} />
               </LineChart>
             </ResponsiveContainer>
           ) : (
-            <div style={styles.chartLoading}>
-              Collecting live data... updates every 5 seconds
-            </div>
+            <div style={styles.chartLoading}>Collecting live data...</div>
           )}
         </div>
 
+        {/* Modal */}
+        {showModal && (
+          <ApiKeyModal
+            onClose={() => setShowModal(false)}
+            onSuccess={fetchBalances}
+          />
+        )}
       </div>
     </div>
   )
@@ -146,47 +171,43 @@ const styles = {
   title: { fontSize: '28px', fontWeight: '700', marginBottom: '24px' },
   walletCard: {
     background: '#1a1d27',
-    padding: '28px 32px',
+    padding: '28px',
     borderRadius: '12px',
-    border: '1px solid #2a2d3a',
     marginBottom: '24px',
     display: 'flex',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  walletLabel: { color: '#a0a0b0', fontSize: '14px', marginBottom: '8px' },
-  walletValue: { fontSize: '36px', fontWeight: '700', color: '#fff' },
-  walletBadge: {
-    background: '#4f8ef722',
-    color: '#4f8ef7',
-    padding: '6px 16px',
-    borderRadius: '20px',
-    fontSize: '13px',
+  walletLabel: { color: '#aaa' },
+  walletValue: { fontSize: '36px', fontWeight: '700' },
+  walletBadge: { color: '#4f8ef7' },
+  ticker: { display: 'flex', gap: '12px', marginBottom: '24px' },
+  tickerItem: { flex: 1, padding: '16px', borderRadius: '10px', border: '1px solid' },
+  tickerSymbol: { color: '#aaa' },
+  tickerPrice: { color: '#4f8ef7' },
+  chartCard: { background: '#1a1d27', padding: '24px', borderRadius: '12px' },
+  chartHeader: { display: 'flex', justifyContent: 'space-between' },
+  chartTitle: { fontSize: '18px' },
+  live: { color: 'green' },
+  chartLoading: { height: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  error: { color: '#e74c3c' },
+  muted: { color: '#aaa' },
+  addBtn: {
+    padding: '8px 16px',
+    background: '#4f8ef7',
+    border: 'none',
+    borderRadius: '6px',
+    color: '#fff',
+    cursor: 'pointer',
+  },
+  binanceBtn: {
+    padding: '8px 16px',
+    background: '#f3ba2f',
+    border: 'none',
+    borderRadius: '6px',
+    color: '#000',
+    cursor: 'pointer',
     fontWeight: '600',
   },
-  ticker: { display: 'flex', gap: '12px', marginBottom: '24px' },
-  tickerItem: {
-    flex: 1,
-    padding: '16px',
-    borderRadius: '10px',
-    border: '1px solid',
-    cursor: 'pointer',
-    transition: 'all .2s',
-  },
-  tickerSymbol: { fontSize: '12px', color: '#a0a0b0', display: 'block', marginBottom: '6px' },
-  tickerPrice: { fontSize: '16px', fontWeight: '700', color: '#4f8ef7' },
-  chartCard: {
-    background: '#1a1d27',
-    padding: '24px',
-    borderRadius: '12px',
-    border: '1px solid #2a2d3a',
-  },
-  chartHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-  chartTitle: { fontSize: '18px', fontWeight: '600' },
-  live: { color: '#2ecc71', fontSize: '13px', fontWeight: '600' },
-  chartLoading: { height: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a0a0b0' },
-  error: { color: '#e74c3c', fontSize: '13px', marginTop: '6px' },
-  muted: { color: '#a0a0b0', fontSize: '13px', marginTop: '6px' },
 }
 
 export default Dashboard
