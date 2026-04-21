@@ -30,7 +30,7 @@ export const tradingService = {
     const response = await api.post('/api-keys/', {
       api_key: apiKey,
       api_secret: apiSecret,
-      exchange: 'binance',
+      exchange: 'coinBase',
     })
     return response.data
   },

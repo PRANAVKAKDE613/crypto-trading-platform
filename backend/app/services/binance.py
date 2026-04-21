@@ -1,31 +1,56 @@
-from binance.client import Client
-from binance.exceptions import BinanceAPIException
+import requests
 from typing import Optional
 
 
-class BinanceService:
-    def __init__(self, api_key: str, api_secret: str, testnet: bool = True):
-        self.client = Client(api_key, api_secret, testnet=testnet)
+class CryptoService:
+    BASE_URL = "https://api.coingecko.com/api/v3"
 
-    def get_account_balance(self) -> list:
-        try:
-            account = self.client.get_account()
-            # Return only non-zero balances
-            balances = [
-                b for b in account["balances"]
-                if float(b["free"]) > 0 or float(b["locked"]) > 0
-            ]
-            return balances
-        except BinanceAPIException as e:
-            raise Exception(f"Binance error: {e.message}")
+    # Map your frontend symbols → CoinGecko IDs
+    SYMBOL_MAP = {
+        "BTCUSDT": "bitcoin",
+        "ETHUSDT": "ethereum",
+        "BNBUSDT": "binancecoin",
+        "SOLUSDT": "solana",
+        "XRPUSDT": "ripple",
+    }
 
+    def __init__(self):
+        pass
+
+    # ✅ Get price
     def get_symbol_price(self, symbol: str) -> dict:
         try:
-            ticker = self.client.get_symbol_ticker(symbol=symbol)
-            return ticker
-        except BinanceAPIException as e:
-            raise Exception(f"Binance error: {e.message}")
+            coin_id = self.SYMBOL_MAP.get(symbol)
 
+            if not coin_id:
+                raise Exception("Unsupported symbol")
+
+            url = f"{self.BASE_URL}/simple/price"
+            params = {
+                "ids": coin_id,
+                "vs_currencies": "usd"
+            }
+
+            response = requests.get(url, params=params)
+            data = response.json()
+
+            return {
+                "symbol": symbol,
+                "price": data[coin_id]["usd"]
+            }
+
+        except Exception as e:
+            raise Exception(f"CoinGecko error: {str(e)}")
+
+    # ⚠️ Fake balance (since CoinGecko doesn't support wallets)
+    def get_account_balance(self) -> list:
+        return [
+            {"asset": "USDT", "free": "1000", "locked": "0"},
+            {"asset": "BTC", "free": "0.01", "locked": "0"},
+            {"asset": "ETH", "free": "0.2", "locked": "0"},
+        ]
+
+    # ❌ Not supported (placeholder)
     def place_order(
         self,
         symbol: str,
@@ -33,37 +58,13 @@ class BinanceService:
         quantity: float,
         order_type: str = "MARKET"
     ) -> dict:
-        try:
-            if side.upper() == "BUY":
-                order = self.client.order_market_buy(
-                    symbol=symbol,
-                    quantity=quantity
-                )
-            else:
-                order = self.client.order_market_sell(
-                    symbol=symbol,
-                    quantity=quantity
-                )
-            return order
-        except BinanceAPIException as e:
-            raise Exception(f"Binance error: {e.message}")
+        return {"message": "Trading not supported with CoinGecko"}
 
     def get_open_orders(self, symbol: Optional[str] = None) -> list:
-        try:
-            if symbol:
-                return self.client.get_open_orders(symbol=symbol)
-            return self.client.get_open_orders()
-        except BinanceAPIException as e:
-            raise Exception(f"Binance error: {e.message}")
+        return []
 
     def get_trade_history(self, symbol: str) -> list:
-        try:
-            return self.client.get_my_trades(symbol=symbol)
-        except BinanceAPIException as e:
-            raise Exception(f"Binance error: {e.message}")
+        return []
 
     def cancel_order(self, symbol: str, order_id: int) -> dict:
-        try:
-            return self.client.cancel_order(symbol=symbol, orderId=order_id)
-        except BinanceAPIException as e:
-            raise Exception(f"Binance error: {e.message}")
+        return {"message": "Cancel not supported"}

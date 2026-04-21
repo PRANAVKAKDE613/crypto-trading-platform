@@ -1,5 +1,7 @@
 import axios from 'axios'
 
+console.log("API BASE URL:", 'https://crypto-trading-platform-production-8371.up.railway.app')
+
 const api = axios.create({
   baseURL: 'https://crypto-trading-platform-production-8371.up.railway.app',
   headers: {
