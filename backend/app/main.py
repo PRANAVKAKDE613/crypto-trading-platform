@@ -23,11 +23,11 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# ✅ Proper CORS setup (ONLY this, no custom middleware)
+# ✅ FINAL WORKING CORS CONFIG
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # 🔥 TEMPORARY FIX
-    allow_credentials=True,
+    allow_origins=["*"],        # allow all origins
+    allow_credentials=False,    # 🔥 IMPORTANT: must be False with "*"
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -38,6 +38,7 @@ async def health_check():
     return {"status": "ok", "app": settings.APP_NAME}
 
 
+# ✅ ROUTES
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(api_keys.router, prefix="/api-keys", tags=["api-keys"])
 app.include_router(trading.router, prefix="/trading", tags=["trading"])
