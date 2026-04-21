@@ -26,10 +26,7 @@ app = FastAPI(
 # ✅ Proper CORS setup (ONLY this, no custom middleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://athletic-alignment-production-c07e.up.railway.app",
-    ],
+    allow_origins=["*"],   # 🔥 TEMPORARY FIX
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
